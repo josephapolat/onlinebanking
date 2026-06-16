@@ -23,7 +23,30 @@ public class JdbcUserDao implements UserDao {
     public JdbcUserDao(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
+    @Override
+public List<Account> getAccountsBySignerId(int signerId) {
+    List<Account> accounts = new ArrayList<>();
 
+    String sql =
+            "SELECT * FROM accounts " +
+            "WHERE primary_signer = (SELECT ssn FROM customers WHERE customer_id = ?) " +
+            "OR secondary_signer = (SELECT ssn FROM customers WHERE customer_id = ?)";
+
+    SqlRowSet rs = jdbcTemplate.queryForRowSet(sql, signerId, signerId);
+
+    while (rs.next()) {
+        accounts.add(new Account(
+                rs.getInt("account_id"),
+                rs.getString("primary_signer"),
+                rs.getString("secondary_signer"),
+                rs.getString("account_number"),
+                rs.getDouble("balance"),
+                rs.getString("account_nickname")
+        ));
+    }
+
+    return accounts;
+}
     @Override
     public User getUserById(int userId) {
         String sql = "SELECT * FROM users WHERE user_id = ?";
