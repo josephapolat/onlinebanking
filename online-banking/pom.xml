@@ -11,7 +11,9 @@
     <groupId>com.techelevator</groupId>
     <artifactId>module-02-final-project</artifactId>
     <version>1.0</version>
-
+         <configuration>
+             <mainClass>com.techelevator.Application</mainClass>
+         </configuration>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
