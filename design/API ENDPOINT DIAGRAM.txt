@@ -1,0 +1,11 @@
+API Endpoint Table - AuthenticationController
+
+HTTP Method | Endpoint Path | Request Body | Description | Response | Status Codes
+------------|--------------|--------------|-------------|----------|--------------
+POST | /api/online-banking/login | LoginDto { username, password } | Authenticates a user and generates a JWT token. | LoginResponseDto { token, user } | 200 OK – success; 401 UNAUTHORIZED – invalid credentials; 500 INTERNAL_SERVER_ERROR – DAO error
+POST | /api/online-banking/accounts | User { username } | Retrieves accounts linked to the user's SSN. | List<Account> | 200 OK
+POST | /api/online-banking/register | RegisterUserDto { username, password, confirmPassword, role } | Registers a new user if username is unique and passwords match. | User | 201 CREATED – success; 400 BAD_REQUEST – passwords don’t match or username exists; 500 INTERNAL_SERVER_ERROR – DAO error
+PUT | /api/online-banking/transfer | { fromAccount, toAccount, transferAmount } | Transfers funds between accounts. | None | 200 OK
+PUT | /api/online-banking/submit-nickname | { accountNumber, nickName } | Updates an account’s nickname. | None | 200 OK
+POST | /api/online-banking/account-details | { primarySigner, secondarySigner?, accountNumber } | Retrieves account details including primary/secondary signers and nickname. | { primarySigner, secondarySigner?, accountNickname } | 200 OK
+DELETE | /api/online-banking | { accountNumber } | Closes the specified account. | None | 200 OK

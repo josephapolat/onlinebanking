@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome!</title>
+    <link rel="stylesheet" href="css/stylesheet.css">
+</head>
+<body onload="loadUserData()">
+<div id="top-banner">
+    <a href="index.html" id="log-out-link">Log Out</a>
+</div>
+<div id="side-menu-container">
+    <p id="welcome-title" >Welcome!</p>
+    <button id="home-button" class="nav-but">Home</button>
+    <button id="transfer-button" class="nav-but" onclick="openTransferWindow()">Transfer</button>
+    <button id="docs-button" class="nav-but">Documents</button>
+    <button id="personal-info-button" class="nav-but">Personal Information</button>
+    <button id="settings-button" class="nav-but">Settings</button>
+    <button id="contact-button" class="nav-but">Contact</button>
+
+</div>
+<div id="accounts-container">
+    <div id="account-title-box">
+        <p id="dep">Deposits & Investments</p>
+    </div>
+    <div id="account0" class = "accounts-box">
+        <p id="accTit0" class="accNumTit"></p>
+        <button class="view-details-button" style="visibility: hidden;" id="viewDetBut0" onclick="viewAccountDetails0()">View Details</button>
+        <p id = "main-balance0" class="balance">
+
+        </p>
+    </div>
+    <div id="account1">
+        <p id="accTit1" class="accNumTit"></p>
+
+        <button class="view-details-button" style="visibility: hidden;" id="viewDetBut1" onclick="viewAccountDetails1()">View Details</button>
+        <p id = "main-balance1" class="balance"></p>
+    </div>
+    <div id="account2">
+        <p id="accTit2" class="accNumTit"></p>
+        <button class="view-details-button" style="visibility: hidden;" id="viewDetBut2" onclick="viewAccountDetails2()">View Details</button>
+        <p id = "main-balance2" class="balance"></p>
+    </div>
+    <div id="account3">
+        <p id="accTit3" class="accNumTit"></p>
+        <button class="view-details-button" style="visibility: hidden;" id="viewDetBut3" onclick="viewAccountDetails3()">View Details</button>
+        <p id = "main-balance3" class="balance"></p>
+    </div>
+    <div id="account4">
+        <p id="accTit4" class="accNumTit">
+            <button class="view-details-button" style="visibility: hidden;" id="viewDetBut4" onclick="viewAccountDetails4()">View Details</button>
+        </p>
+        <p id = "main-balance4" class="balance"></p>
+    </div>
+</div>
+<div id="transfer-background">
+
+</div>
+<div id="transfer-container">
+    <p id="transfer-from-text">Transfer From:</p>
+    <select name="from-accounts" id="from-account-dropdown">
+        <option value="acc0"></option>
+        <option value="acc1"></option>
+        <option value="acc2"></option>
+        <option value="acc3"></option>
+    </select>
+    <p id="transfer-to-text">Transfer To:</p>
+    <p id="amount-text">Amount:</p>
+    <input id="amount-to-transfer-input" type="number">
+    <select name="to-accounts" id="to-account-dropdown">
+        <option value="acc0"></option>
+        <option value="acc1"></option>
+        <option value="acc2"></option>
+        <option value="acc3"></option>
+    </select>
+    <button id="cancel-button" onclick="closeTransferWindow()">CANCEL</button>
+    <button id="submit-button" onclick="transfer()">TRANSFER</button>
+</div>
+<button id="edit-button" onclick="editAccountNickname()">Edit</button>
+<button id="close-account-button" onclick="closeAccountConfirm()">Close Account</button>
+<input type="text" id="account-nickname-input" placeholder="Enter new nickname">
+<button id="submit-nickname-button" onclick="submitNewNickname()">Submit</button>
+<p id="accNickLabel">Account Nickname:</p>
+<p id="accNick">hello</p>
+<p id="accNumLabel">Account Number:</p>
+<p id="primSignLabel">Primary Signer:</p>
+<p id="primSign">loper</p>
+<p id="secSignLabel">Secondary Signer:</p>
+<p id="secSign">keliop</p>
+<p id="accNum0" class="accNum">123456789</p>
+<p id="accNum1" class="accNum"></p>
+<p id="accNum2" class="accNum"></p>
+<p id="accNum3" class="accNum"></p>
+<button id="close-button" onclick="closeDetailsWindow()">CLOSE</button>
+<script type="text/javascript" src="js/app.js"></script>
+</body>
+</html>

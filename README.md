@@ -1,0 +1,3 @@
+# Module two final project - Online Banking Application
+
+This is a full stack online banking application built using Spring and RESTful API. Endpoints built from scratch using JAVA. Database code provided. Database built in POSTGRES. Frontend built using HTML, CSS, and JavaScript (I hadn't learned react yet, see forum project for that). App launches with a login scrren that allows users to enter their credentials or register for an account. Authentication handled using JWT. Once logged in a user is able to view their accounts with balances. A user can click on the accounts to get more info including full account number and signers. A user is also able to nickname accounts and close an account. Transfers between accounts also possible and updated in real time.
