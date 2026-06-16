@@ -1,18 +1,18 @@
 package com.techelevator.dao;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.techelevator.exception.DaoException;
 import com.techelevator.model.Account;
 import com.techelevator.model.Signer;
+import com.techelevator.model.User;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
-import com.techelevator.model.User;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class JdbcUserDao implements UserDao {
@@ -23,186 +23,187 @@ public class JdbcUserDao implements UserDao {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    // ---------------- USERS ----------------
+
     @Override
     public User getUserById(int userId) {
-
-        User user = new User();
         String sql = "SELECT * FROM users WHERE user_id = ?";
 
-
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, userId);
-            while(results.next()) {
-                user.setUsername(results.getString("username"));
-                user.setId(results.getInt("user_id"));
+        try {
+            SqlRowSet rs = jdbcTemplate.queryForRowSet(sql, userId);
+            if (rs.next()) {
+                return mapRowToUser(rs);
             }
-
-        return user;
+            return null;
+        } catch (Exception e) {
+            throw new DaoException("Error getting user by id", e);
+        }
     }
 
     @Override
     public List<User> getUsers() {
-
         List<User> users = new ArrayList<>();
         String sql = "SELECT * FROM users ORDER BY username";
 
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
-            while (results.next()) {
-                User user = mapRowToUser(results);
-                users.add(user);
+            SqlRowSet rs = jdbcTemplate.queryForRowSet(sql);
+            while (rs.next()) {
+                users.add(mapRowToUser(rs));
             }
+            return users;
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("DB connection error", e);
         }
-        catch (CannotGetJdbcConnectionException e) {
-            throw new DaoException("Unable to connect to server or database", e);
-        }
-        return users;
     }
 
     @Override
     public User getUserByUsername(String username) {
-
-        if (username == null) {
-            username = "";
-        }
-        User user = null;
         String sql = "SELECT * FROM users WHERE username = ?";
 
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, username);
-            if (results.next()) {
-                user = mapRowToUser(results);
+            SqlRowSet rs = jdbcTemplate.queryForRowSet(sql, username);
+            if (rs.next()) {
+                return mapRowToUser(rs);
             }
+            return null;
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("DB connection error", e);
         }
-        catch (CannotGetJdbcConnectionException e) {
-            throw new DaoException("Unable to connect to server or database", e);
-        }
-        return user;
     }
 
     @Override
     public User createUser(User newUser) {
+        String sql = """
+            INSERT INTO users (username, password_hash, role, signer_id)
+            VALUES (?, ?, ?, ?)
+            RETURNING user_id
+        """;
 
-        User user = null;
-        String insertUserSql = "INSERT INTO users " +
-                "(username, password_hash, role) " +
-                "VALUES (?, ?, ?) " +
-                "RETURNING user_id";
-
-        if (newUser.getHashedPassword() == null) {
-            throw new DaoException("User cannot be created with null password");
-        }
         try {
-            String passwordHash = new BCryptPasswordEncoder().encode(newUser.getHashedPassword());
+            String hash = new BCryptPasswordEncoder().encode(newUser.getHashedPassword());
 
-            Integer userId = jdbcTemplate.queryForObject(insertUserSql, int.class,
-                    newUser.getUsername(), passwordHash, newUser.getRole());
-            user =  getUserById(userId);
+            Integer userId = jdbcTemplate.queryForObject(
+                    sql,
+                    Integer.class,
+                    newUser.getUsername(),
+                    hash,
+                    newUser.getRole(),
+                    newUser.getSignerId()
+            );
+
+            return getUserById(userId);
+
+        } catch (DataIntegrityViolationException e) {
+            throw new DaoException("User already exists or invalid data", e);
         }
-        catch (CannotGetJdbcConnectionException e) {
-            throw new DaoException("Unable to connect to server or database", e);
-        }
-        catch (DataIntegrityViolationException e) {
-            throw new DaoException("Data integrity violation", e);
-        }
-        return user;
     }
+
+    // ---------------- SIGNER ----------------
 
     @Override
     public Signer getSignerBySignerSsn(String ssn) {
-        Signer signer = null;
         String sql = "SELECT * FROM customers WHERE ssn = ?";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, ssn);
-        while(results.next()){
-            signer = new Signer(results.getInt("customer_id"), results.getString("name"), results.getString("ssn"));
-        }
-        return signer;
-    }
-    @Override
-    public String getAccountNickname(String accNum){
-        String sql = "SELECT account_nickname FROM accounts WHERE account_number = ?";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accNum);
-        String nickname = "";
-        if(results.next()){
-            nickname = results.getString("account_nickname");
-        }
-        return nickname;
-    }
 
-
-    public Signer getSignerBySignerId(int signerId) {
-        Signer signer = null;
-        String sql = "SELECT * FROM customers WHERE customer_id = ?";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, signerId);
-        while(results.next()){
-            signer = new Signer(results.getInt("customer_id"), results.getString("name"), results.getString("ssn"));
+        SqlRowSet rs = jdbcTemplate.queryForRowSet(sql, ssn);
+        if (rs.next()) {
+            return new Signer(
+                    rs.getInt("customer_id"),
+                    rs.getString("name"),
+                    rs.getString("ssn")
+            );
         }
-        return signer;
-    }
-
-    @Override
-    public String getSignerByUsername(String username) {
-        String signerSsn = "";
-        String sql = "SELECT * FROM customers WHERE customer_id = (SELECT signer_id FROM users WHERE username = ?)";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, username);
-        if(results.next()){
-            signerSsn = results.getString("ssn");
-        }
-        return signerSsn;
-    }
-
-    @Override
-    public List<Account> getAccountsBySignerId(int signerId) {
         return null;
     }
 
     @Override
+    public Signer getSignerBySignerId(int signerId) {
+        String sql = "SELECT * FROM customers WHERE customer_id = ?";
+
+        SqlRowSet rs = jdbcTemplate.queryForRowSet(sql, signerId);
+        if (rs.next()) {
+            return new Signer(
+                    rs.getInt("customer_id"),
+                    rs.getString("name"),
+                    rs.getString("ssn")
+            );
+        }
+        return null;
+    }
+
+    @Override
+    public String getSignerByUsername(String username) {
+        String sql = """
+            SELECT c.ssn
+            FROM customers c
+            JOIN users u ON u.signer_id = c.customer_id
+            WHERE u.username = ?
+        """;
+
+        SqlRowSet rs = jdbcTemplate.queryForRowSet(sql, username);
+        if (rs.next()) {
+            return rs.getString("ssn");
+        }
+        return "";
+    }
+
+    // ---------------- ACCOUNTS ----------------
+
+    @Override
     public List<Account> getAccountsBySignerSsn(String ssn) {
         List<Account> accounts = new ArrayList<>();
-        String sql = "SELECT * FROM accounts WHERE primary_signer = ? UNION SELECT * FROM accounts WHERE secondary_signer = ?";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, ssn, ssn);
-        while(results.next()){
-            Account curAcc = new Account(results.getInt("account_id"), results.getString("primary_signer"), results.getString("secondary_signer"), results.getString("account_number"), results.getDouble("balance"), results.getString("account_nickname"));
-            accounts.add(curAcc);
+
+        String sql = """
+            SELECT * FROM accounts
+            WHERE primary_signer = ?
+               OR secondary_signer = ?
+        """;
+
+        SqlRowSet rs = jdbcTemplate.queryForRowSet(sql, ssn, ssn);
+
+        while (rs.next()) {
+            accounts.add(new Account(
+                    rs.getInt("account_id"),
+                    rs.getString("primary_signer"),
+                    rs.getString("secondary_signer"),
+                    rs.getString("account_number"),
+                    rs.getDouble("balance"),
+                    rs.getString("account_nickname")
+            ));
         }
+
         return accounts;
     }
-    public Signer getSignerByUserId(int userId){
-        Signer signer = null;
-        String sql = "SELECT * FROM customers WHERE customer_id = (SELECT signer_id FROM users WHERE signer_id = ?";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, userId);
-        signer.setSignerId(results.getInt("customer_id"));
-        signer.setName(results.getString("name"));
-        signer.setSSN(results.getString("ssn"));
-        return signer;
-    }
-    public String getUsernameByUserId(int id){
-        String sql = "SELECT username FROM users WHERE user_id = ?";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, id);
-        return results.getString("username");
-    }
+
     @Override
-    public void transferBalance(String fromAccount, String toAccount, double transferAmount){
-        double balanceToAccount = 0.00;
-        double balanceFromAccount = 0.00;
-        String sqlGetBalanceToAccount = "SELECT balance FROM accounts WHERE account_number = ?";
-        SqlRowSet currentBalanceToAccount = jdbcTemplate.queryForRowSet(sqlGetBalanceToAccount, toAccount);
+    public String getAccountNickname(String accNum) {
+        String sql = "SELECT account_nickname FROM accounts WHERE account_number = ?";
 
-        if(currentBalanceToAccount.next()){
-            balanceToAccount = currentBalanceToAccount.getDouble("balance");
+        SqlRowSet rs = jdbcTemplate.queryForRowSet(sql, accNum);
+        if (rs.next()) {
+            return rs.getString("account_nickname");
         }
-        balanceToAccount = balanceToAccount + transferAmount;
-        String sql = "UPDATE accounts SET balance = ? WHERE account_number = ?";
-        jdbcTemplate.update(sql, balanceToAccount, toAccount);
-        String sqlGetBalanceFromAccount = "SELECT balance FROM accounts WHERE account_number = ?";
-        SqlRowSet currentBalanceFromAccount = jdbcTemplate.queryForRowSet(sqlGetBalanceFromAccount, fromAccount);
-        if(currentBalanceFromAccount.next()){
-            balanceFromAccount = currentBalanceFromAccount.getDouble("balance");
-        }
+        return "";
+    }
 
-        balanceFromAccount = balanceFromAccount - transferAmount;
-        String sql2 = "UPDATE accounts SET balance = ? WHERE account_number = ?";
-        jdbcTemplate.update(sql2, balanceFromAccount, fromAccount);
+    // ---------------- TRANSFERS ----------------
 
+    @Override
+    public void transferBalance(String fromAccount, String toAccount, double amount) {
+
+        String getSql = "SELECT balance FROM accounts WHERE account_number = ?";
+        String updateSql = "UPDATE accounts SET balance = ? WHERE account_number = ?";
+
+        SqlRowSet rsTo = jdbcTemplate.queryForRowSet(getSql, toAccount);
+        SqlRowSet rsFrom = jdbcTemplate.queryForRowSet(getSql, fromAccount);
+
+        double toBalance = 0;
+        double fromBalance = 0;
+
+        if (rsTo.next()) toBalance = rsTo.getDouble("balance");
+        if (rsFrom.next()) fromBalance = rsFrom.getDouble("balance");
+
+        jdbcTemplate.update(updateSql, toBalance + amount, toAccount);
+        jdbcTemplate.update(updateSql, fromBalance - amount, fromAccount);
     }
 
     @Override
@@ -215,8 +216,9 @@ public class JdbcUserDao implements UserDao {
     public void closeAccount(String accountNumber) {
         String sql = "DELETE FROM accounts WHERE account_number = ?";
         jdbcTemplate.update(sql, accountNumber);
-
     }
+
+    // ---------------- MAPPING ----------------
 
     private User mapRowToUser(SqlRowSet rs) {
         User user = new User();
@@ -224,6 +226,12 @@ public class JdbcUserDao implements UserDao {
         user.setUsername(rs.getString("username"));
         user.setHashedPassword(rs.getString("password_hash"));
         user.setRole(rs.getString("role"));
+
+        // IMPORTANT: avoid breaking if column exists
+        try {
+            user.setSignerId(rs.getInt("signer_id"));
+        } catch (Exception ignored) {}
+
         return user;
     }
 }
