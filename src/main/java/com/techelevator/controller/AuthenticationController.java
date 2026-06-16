@@ -39,7 +39,10 @@ public class AuthenticationController {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDao = userDao;
     }
-
+    @RequestMapping(path = "/test", method = RequestMethod.GET)
+    public String test() {
+        return "WORKING";
+    }
     @RequestMapping(path = "/login", method = RequestMethod.POST)
     public LoginResponseDto login(@Valid @RequestBody LoginDto loginDto) {
         try {
