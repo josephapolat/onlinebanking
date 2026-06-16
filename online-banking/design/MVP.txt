@@ -1,0 +1,3 @@
+
+As an authenticated user, I can view my accounts and balances that I am a signer on.
+As an authenticated user, I can make transfers between my accounts.
