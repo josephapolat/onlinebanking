@@ -34,7 +34,7 @@ function login(){
                    response.json().then((responseDecode) => {
                         jwt = responseDecode.token;
 
-                        window.location.replace("/final-project/module-2/week-9/final-project/src/main/resources/static/user.html");
+                        window.location.replace("/user.html");
                    });
 
 
