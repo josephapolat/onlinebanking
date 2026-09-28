@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8080/api/online-banking';
+const API_BASE = '/api/online-banking';
 let jwt;
 var userName;
 var userNameTest;
